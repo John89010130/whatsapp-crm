@@ -1,0 +1,28 @@
+{
+  "name": "whatsapp-crm-root",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:whatsapp\"",
+    "dev:backend": "npm run dev --workspace=@whatsapp-crm/backend",
+    "dev:frontend": "npm run dev --workspace=@whatsapp-crm/frontend",
+    "dev:whatsapp": "npm run dev --workspace=@whatsapp-crm/whatsapp-service",
+    "dev:extension": "npm run dev --workspace=@whatsapp-crm/extension",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces",
+    "test:master-db": "tsx scripts/test-master-db.ts",
+    "test:company-db": "tsx scripts/test-company-db.ts",
+    "register:company": "tsx scripts/register-company.ts",
+    "test:password": "tsx scripts/test-password.ts",
+    "check:user": "tsx scripts/check-user.ts",
+    "fix:password": "tsx scripts/fix-password.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  }
+}

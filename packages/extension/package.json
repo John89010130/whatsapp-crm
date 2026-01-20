@@ -1,0 +1,24 @@
+{
+  "name": "@whatsapp-crm/extension",
+  "version": "1.0.0",
+  "description": "WhatsApp CRM Chrome Extension",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@whatsapp-crm/shared": "*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.258",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11",
+    "vite-plugin-web-extension": "^4.0.0"
+  }
+}
