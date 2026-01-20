@@ -1,6 +1,14 @@
 # WhatsApp CRM - Sistema de Atendimento Multicanal
 
+[![Deploy](https://github.com/john89010130/whatsapp-crm/actions/workflows/deploy.yml/badge.svg)](https://github.com/john89010130/whatsapp-crm/actions/workflows/deploy.yml)
+[![CI](https://github.com/john89010130/whatsapp-crm/actions/workflows/ci.yml/badge.svg)](https://github.com/john89010130/whatsapp-crm/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-5.0-blue.svg)](https://www.typescriptlang.org)
+
 Sistema completo de CRM para WhatsApp com interface moderna estilo WhatsApp Web, suporte a múltiplas instâncias e recursos avançados de atendimento.
+
+🔗 **Demo**: https://john89010130.github.io/whatsapp-crm/
 
 ## 🚀 Features Principais
 

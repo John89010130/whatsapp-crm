@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.GITHUB_PAGES ? '/whatsapp-crm/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -19,6 +20,18 @@ export default defineConfig({
       '/ws': {
         target: 'ws://localhost:3000',
         ws: true
+      }
+    }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom']
+        }
       }
     }
   }
