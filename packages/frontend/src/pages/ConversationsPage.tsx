@@ -78,6 +78,11 @@ interface Conversation {
   unread_count: number;
   assigned_to: string | null;
   created_at: string;
+  instance?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
 }
 
 // Componente de Áudio Player
@@ -242,19 +247,32 @@ export const ConversationsPage = () => {
   // Estado para feedback de upload
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
+  // Estados para filtro de instância
+  const [instances, setInstances] = useState<Array<{id: string; name: string; phone: string}>>([]);
+  const [selectedInstanceFilter, setSelectedInstanceFilter] = useState<string>('all');
+
+  const loadInstances = async () => {
+    try {
+      const response = await api.getInstances();
+      if (response.success) {
+        setInstances(response.data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar instâncias:', error);
+    }
+  };
+
   const loadConversations = async () => {
     try {
       const status = statusFilter !== 'all' ? statusFilter : undefined;
       const response = await api.getConversations(status);
       if (response.success) {
-        // Filtrar conversas pela instância selecionada (se houver)
         let filteredData = response.data || [];
         
-        // TODO: Quando implementar seletor de instância, filtrar aqui
-        // const selectedInstanceId = localStorage.getItem('selectedInstanceId');
-        // if (selectedInstanceId) {
-        //   filteredData = filteredData.filter(c => c.instance_id === selectedInstanceId);
-        // }
+        // Filtrar por instância se selecionada
+        if (selectedInstanceFilter !== 'all') {
+          filteredData = filteredData.filter((c: Conversation) => c.instance_id === selectedInstanceFilter);
+        }
         
         // Ordenar por last_message_at DESC (backend já faz isso, mas garantir no frontend)
         const sortedConversations = filteredData.sort((a: Conversation, b: Conversation) => {
@@ -689,11 +707,12 @@ export const ConversationsPage = () => {
   });
 
   useEffect(() => {
+    loadInstances();
     loadConversations();
     // Atualiza a cada 5 segundos
     const interval = setInterval(loadConversations, 5000);
     return () => clearInterval(interval);
-  }, [statusFilter]);
+  }, [statusFilter, selectedInstanceFilter]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -739,8 +758,8 @@ export const ConversationsPage = () => {
             />
           </div>
 
-          {/* Filter */}
-          <div className="flex gap-2">
+          {/* Filter - Status */}
+          <div className="flex gap-2 mb-2">
             {['all', 'open', 'pending', 'closed'].map((status) => (
               <button
                 key={status}
@@ -756,6 +775,24 @@ export const ConversationsPage = () => {
               </button>
             ))}
           </div>
+
+          {/* Filter - Instância */}
+          {instances.length > 1 && (
+            <div className="mb-3">
+              <select
+                value={selectedInstanceFilter}
+                onChange={(e) => setSelectedInstanceFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-colors text-sm"
+              >
+                <option value="all">📱 Todas as instâncias</option>
+                {instances.map((instance) => (
+                  <option key={instance.id} value={instance.id}>
+                    📱 {instance.name || instance.phone}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Lista */}
@@ -804,12 +841,22 @@ export const ConversationsPage = () => {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className={cn(
-                      "font-medium truncate",
-                      conversation.unread_count > 0 ? "text-gray-900" : "text-gray-700"
-                    )}>
-                      {conversation.contact?.name || conversation.contact?.phone}
-                    </p>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <p className={cn(
+                        "font-medium truncate",
+                        conversation.unread_count > 0 ? "text-gray-900" : "text-gray-700"
+                      )}>
+                        {conversation.contact?.name || conversation.contact?.phone}
+                      </p>
+                      {/* Badge da Instância (mostrar apenas se houver mais de uma instância) */}
+                      {instances.length > 1 && (
+                        <span className="flex-shrink-0 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                          {instances.find(i => i.id === conversation.instance_id)?.name?.substring(0, 15) || 
+                           instances.find(i => i.id === conversation.instance_id)?.phone?.substring(-4) ||
+                           'Inst'}
+                        </span>
+                      )}
+                    </div>
                     <span className={cn(
                       "text-xs flex-shrink-0",
                       conversation.unread_count > 0 ? "text-green-600 font-medium" : "text-gray-500"
@@ -871,10 +918,20 @@ export const ConversationsPage = () => {
                   )}
                 </div>
               )}
-              <div>
-                <p className="font-medium text-gray-900">
-                  {selectedConversation.contact?.name || selectedConversation.contact?.phone}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-900">
+                    {selectedConversation.contact?.name || selectedConversation.contact?.phone}
+                  </p>
+                  {/* Badge da Instância no header */}
+                  {instances.length > 1 && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                      {instances.find(i => i.id === selectedConversation.instance_id)?.name || 
+                       instances.find(i => i.id === selectedConversation.instance_id)?.phone?.substring(-4) ||
+                       'Instância'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500">
                   {selectedConversation.is_group ? 'Grupo' : selectedConversation.contact?.phone}
                 </p>

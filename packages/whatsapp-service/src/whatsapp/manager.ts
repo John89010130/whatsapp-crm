@@ -375,7 +375,7 @@ export class WhatsAppManager {
   private async saveContacts(instanceId: string, contacts: any): Promise<void> {
     try {
       const contactList = Array.isArray(contacts) ? contacts : Object.values(contacts);
-      console.log(`[${instanceId}] 💾 Salvando ${contactList.length} contatos...`);
+      console.log(`[${instanceId}] 💾 Processando ${contactList.length} contatos...`);
       
       let saved = 0;
       for (const contact of contactList) {
@@ -385,16 +385,19 @@ export class WhatsAppManager {
         }
         
         const phone = jid.split('@')[0];
-        const name = contact.name || contact.notify || contact.verifiedName || contact.pushName || null;
+        // Buscar nome em múltiplas propriedades
+        const name = contact.name || contact.notify || contact.verifiedName || contact.pushName || contact.vname || null;
         
-        if (phone && name) {
-          // Upsert no banco - criar ou atualizar contato
+        console.log(`[${instanceId}] 👤 Contato ${phone}: nome="${name}", notify="${contact.notify}", pushName="${contact.pushName}"`);
+        
+        // Salvar mesmo sem nome - será atualizado depois se vier o nome
+        try {
           await companySupabase
             .from('contacts')
             .upsert({
               instance_id: instanceId,
               phone: phone,
-              name: name,
+              name: name || phone, // Usar phone se não tiver nome
               whatsapp_name: contact.notify || contact.pushName || null,
               verified_name: contact.verifiedName || null,
               profile_picture_url: contact.imgUrl || null,
@@ -403,10 +406,12 @@ export class WhatsAppManager {
               onConflict: 'instance_id,phone'
             });
           saved++;
+        } catch (err) {
+          console.error(`[${instanceId}] ❌ Erro ao salvar contato ${phone}:`, err);
         }
       }
       
-      console.log(`[${instanceId}] ✅ ${saved} contatos salvos`);
+      console.log(`[${instanceId}] ✅ ${saved} contatos processados`);
     } catch (error) {
       console.error(`[${instanceId}] ❌ Erro ao salvar contatos:`, error);
     }
