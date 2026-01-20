@@ -18,43 +18,90 @@ router.delete('/:id', instancesController.delete.bind(instancesController));
 router.delete('/:id/clear-messages', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('🗑️ Limpando mensagens da instância:', id);
+    console.log('🗑️ Iniciando limpeza completa da instância:', id);
 
-    // Buscar todas as conversas da instância
-    const { data: conversations } = await supabase
+    let deletedMessages = 0;
+    let deletedConversations = 0;
+    let deletedContacts = 0;
+
+    // 1. Buscar todas as conversas da instância
+    const { data: conversations, error: fetchError } = await supabase
       .from('conversations')
       .select('id')
       .eq('instance_id', id);
 
+    if (fetchError) {
+      console.error('❌ Erro ao buscar conversas:', fetchError);
+      throw fetchError;
+    }
+
+    console.log(`📊 Encontradas ${conversations?.length || 0} conversas`);
+
     if (conversations && conversations.length > 0) {
       const conversationIds = conversations.map(c => c.id);
       
-      // Deletar mensagens
-      const { error: msgError } = await supabase
+      // 2. Deletar mensagens (em lotes se necessário)
+      console.log('🗑️ Deletando mensagens...');
+      const { data: deletedMsgs, error: msgError } = await supabase
         .from('messages')
         .delete()
-        .in('conversation_id', conversationIds);
+        .in('conversation_id', conversationIds)
+        .select('id');
 
       if (msgError) {
-        console.error('Erro ao deletar mensagens:', msgError);
+        console.error('❌ Erro ao deletar mensagens:', msgError);
+      } else {
+        deletedMessages = deletedMsgs?.length || 0;
+        console.log(`✅ ${deletedMessages} mensagens deletadas`);
       }
 
-      // Deletar conversas
-      const { error: convError } = await supabase
+      // 3. Deletar conversas
+      console.log('🗑️ Deletando conversas...');
+      const { data: deletedConvs, error: convError } = await supabase
         .from('conversations')
         .delete()
-        .eq('instance_id', id);
+        .eq('instance_id', id)
+        .select('id');
 
       if (convError) {
-        console.error('Erro ao deletar conversas:', convError);
+        console.error('❌ Erro ao deletar conversas:', convError);
+      } else {
+        deletedConversations = deletedConvs?.length || 0;
+        console.log(`✅ ${deletedConversations} conversas deletadas`);
       }
-
-      console.log(`✅ Limpas ${conversations.length} conversas e suas mensagens`);
     }
 
-    res.json({ success: true, message: 'Mensagens e conversas removidas' });
+    // 4. Deletar contatos da instância
+    console.log('🗑️ Deletando contatos...');
+    const { data: deletedCtcs, error: contactError } = await supabase
+      .from('contacts')
+      .delete()
+      .eq('instance_id', id)
+      .select('id');
+
+    if (contactError) {
+      console.error('❌ Erro ao deletar contatos:', contactError);
+    } else {
+      deletedContacts = deletedCtcs?.length || 0;
+      console.log(`✅ ${deletedContacts} contatos deletados`);
+    }
+
+    console.log(`✅ Limpeza completa finalizada:
+      - ${deletedMessages} mensagens
+      - ${deletedConversations} conversas
+      - ${deletedContacts} contatos`);
+
+    res.json({ 
+      success: true, 
+      message: 'Dados removidos com sucesso',
+      data: {
+        messages: deletedMessages,
+        conversations: deletedConversations,
+        contacts: deletedContacts
+      }
+    });
   } catch (error: any) {
-    console.error('Erro ao limpar mensagens:', error);
+    console.error('❌ Erro ao limpar mensagens:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

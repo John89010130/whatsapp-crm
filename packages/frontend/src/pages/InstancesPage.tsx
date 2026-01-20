@@ -146,22 +146,34 @@ export const InstancesPage = () => {
         // Se pediu para limpar mensagens
         if (shouldClearMessages) {
           try {
-            console.log('🗑️ Limpando mensagens da instância:', instanceId);
-            await fetch(`http://localhost:3000/api/instances/${instanceId}/clear-messages`, {
+            console.log('🗑️ Limpando dados da instância:', instanceId);
+            const clearResponse = await fetch(`http://localhost:3000/api/instances/${instanceId}/clear-messages`, {
               method: 'DELETE',
               headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
               }
             });
-            console.log('✅ Mensagens limpas!');
+            
+            const clearData = await clearResponse.json();
+            console.log('✅ Dados limpos:', clearData);
+            
+            if (clearData.success && clearData.data) {
+              alert(`Limpeza completa!
+✅ ${clearData.data.messages} mensagens removidas
+✅ ${clearData.data.conversations} conversas removidas
+✅ ${clearData.data.contacts} contatos removidos`);
+            }
           } catch (err) {
-            console.error('Erro ao limpar mensagens:', err);
+            console.error('❌ Erro ao limpar mensagens:', err);
+            alert('Erro ao limpar mensagens. Verifique o console para mais detalhes.');
           }
         }
         loadInstances();
       }
     } catch (error) {
       console.error('Erro ao desconectar:', error);
+      alert('Erro ao desconectar instância');
     } finally {
       setDisconnectModal(null);
       setClearMessages(false);
